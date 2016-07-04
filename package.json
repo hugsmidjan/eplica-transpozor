@@ -1,0 +1,25 @@
+{
+  "name": "eplica-transpozor",
+  "version": "1.0.0",
+  "description": "Content transposing plugin manager for Eplica's Inline WYSIWYG Editor.",
+  "main": "transpozor.cjs.js",
+  "jsnext:main": "transpozor.js",
+  "scripts": {
+    "build": "node_modules/.bin/rollup -c",
+    "dev": "node_modules/.bin/watch 'npm run build' src",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@stash.hugsmidjan.is:7999/tool/eplica-transpozor.git"
+  },
+  "author": "Hugsmiðjan ehf (http://www.hugsmidjan.is)",
+  "contributors": [
+    "Már Örlygsson <mar.nospam@anomy.net> (http://mar.anomy.net/)"
+  ],
+  "license": "ISC",
+  "devDependencies": {
+    "rollup": "^0.33.0",
+    "watch": "^0.19.1"
+  }
+}

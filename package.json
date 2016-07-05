@@ -2,8 +2,8 @@
   "name": "eplica-transpozor",
   "version": "1.0.0",
   "description": "Content transposing plugin manager for Eplica's Inline WYSIWYG Editor.",
-  "main": "transpozor.cjs.js",
-  "jsnext:main": "transpozor.js",
+  "main": "dist/transpozor.cjs.js",
+  "jsnext:main": "dist/transpozor.js",
   "scripts": {
     "build": "node_modules/.bin/rollup -c",
     "dev": "node_modules/.bin/watch 'npm run build' src",

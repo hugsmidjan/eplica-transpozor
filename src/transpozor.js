@@ -1,29 +1,30 @@
-var transpozor;
-var plugins = [];
-var pluginsById = {};
-var widgets = [];
+let transpozor;
+const plugins = [];
+const pluginsById = {};
+const widgets = [];
 
-var events = {
+const events = {
   start: [],
   end: [],
 };
 
 // Element#matches normalization.
-var ep = Element.prototype;
+const ep = Element.prototype;
 ep.is = ep.matches || ep.msMatchesSelector || ep.webkitMatchesSelector;
 
-var $ = function (selector, elm) {
+
+const $ = function (selector, elm) {
   return !selector ? [] : [].slice.call( (elm||document).querySelectorAll(selector) );
 };
 
 
-var defaultParseData = function (elm) {
+const defaultParseData = function (elm) {
   return JSON.parse( elm.getAttribute('data-transpozor') ) || {};
 };
 
-var createWidget = function (plugin, elm, editElm, isInserting) {
-  var data = (plugin.parseData||defaultParseData)(elm, editElm, isInserting);
-  var wrapperElm = document.createElement('div');
+const createWidget = function (plugin, elm, editElm, isInserting) {
+  const data = (plugin.parseData||defaultParseData)(elm, editElm, isInserting);
+  const wrapperElm = document.createElement('div');
   wrapperElm.setAttribute('data-transpozor-wrapper', '');
 
   wrapperElm.addEventListener('paste', function(e){
@@ -44,9 +45,7 @@ var createWidget = function (plugin, elm, editElm, isInserting) {
       // to run its course and the inline-editor to inject the pasted content
       // into place.
       wrapperElm.contentEditable = true;
-      setTimeout(function(){
-        wrapperElm.contentEditable = false;
-      }, 500);
+      setTimeout(()=>{ wrapperElm.contentEditable = false; }, 500);
     }
   }, true);
   // Problem:
@@ -59,7 +58,7 @@ var createWidget = function (plugin, elm, editElm, isInserting) {
   // Toolbar clicks inherently blur the editElm so we make the
   // contentEditable lock/scoping off-by-default and only
   // turn it on while editElm has focus.
-  var isExternallySourced = function (e) {
+  const isExternallySourced = function (e) {
     return  (
       !e.relatedTarget ||
       ( !e.relatedTarget.contains(e.target) &&
@@ -67,12 +66,12 @@ var createWidget = function (plugin, elm, editElm, isInserting) {
       )
     );
   };
-  var lockWrapperElm = function(e){
+  const lockWrapperElm = function(e){
     if (wrapperElm.contedEditable !== 'false' && isExternallySourced(e) ) {
       wrapperElm.contentEditable = false;
     }
   };
-  var unlockWrapperElm = function(e){
+  const unlockWrapperElm = function(e){
     if (wrapperElm.contedEditable !== 'true' && isExternallySourced(e) ) {
       wrapperElm.contentEditable = true;
     }
@@ -95,7 +94,7 @@ var createWidget = function (plugin, elm, editElm, isInserting) {
   // wrapperElm.contentEditable = false;
 
   elm.parentNode.replaceChild(wrapperElm, elm);
-  var newWidget = new plugin({
+  const newWidget = new plugin({
     data: data,
     wrapperElm: wrapperElm,
     editElm: editElm,
@@ -108,28 +107,28 @@ var createWidget = function (plugin, elm, editElm, isInserting) {
 // When the user injects one or more new/empty widgets
 // into an editElm, this function gets called to initialize the
 // inserted empty widget-markers.
-var scanForInsertMarkers = function () {
+const scanForInsertMarkers = function () {
   // HTML-Snippet (Greinaklippur) example:
   //     <img data-transpozor-insert="pluginId" onload="EPLICA.inlineEditor.transpozor.rescan()" src="https://eplica-cdn.is/f/e2-w.png" />
   //
   // JavaScript injection example:
-  //     var widgetMarker = document.createElement('div');
+  //     const widgetMarker = document.createElement('div');
   //     widgetMarker.setAttribute('data-transpozor-insert', 'pluginId');
   //     editElm.appendChild( widgetMarker );
   //     transpozor.rescan();
   //
   $('[data-transpozor-insert]').forEach(function (placeholderElm) {
-    var type = placeholderElm.getAttribute('data-transpozor-insert');
-    var plugin = pluginsById[type];
+    const type = placeholderElm.getAttribute('data-transpozor-insert');
+    const plugin = pluginsById[type];
     if ( plugin ) {
-      var editElm = placeholderElm.parentNode;
-      var nonEditElmParent;
+      let editElm = placeholderElm.parentNode;
+      let nonEditElmParent;
       while (editElm && !editElm.is('.EPLICA_editzone')) {
         nonEditElmParent = editElm;
         editElm = editElm.parentNode;
       }
       if ( editElm ) {
-        var insert = plugin.validateInsertion && plugin.validateInsertion( placeholderElm, editElm );
+        const insert = plugin.validateInsertion && plugin.validateInsertion( placeholderElm, editElm );
         if ( insert === false ) {
           placeholderElm.parentNode.removeChild( placeholderElm );
         }
@@ -146,8 +145,8 @@ var scanForInsertMarkers = function () {
 
 
 
-var _registered;
-var registerWithEditor = function (editor) {
+let _registered;
+const registerWithEditor = function (editor) {
   if ( !_registered ) {
     _registered = true;
 
@@ -156,8 +155,8 @@ var registerWithEditor = function (editor) {
     // Expose transpozor as part of the Eplica inlineEditor.
     editor.transpozor = transpozor;
 
-    var _pluginSelectors;
-    var pluginSelectors = function () {
+    let _pluginSelectors;
+    const pluginSelectors = function () {
       if ( _pluginSelectors === undefined ) {
         _pluginSelectors = plugins
             .map(function (plugin) { return plugin.selector; })
@@ -167,24 +166,22 @@ var registerWithEditor = function (editor) {
     };
 
     editor.addEvent('EditorOpen', function (e) {
-      var editElms = e.editElms;
+      const editElms = e.editElms;
       // Something in the Editor activation process messes with
       // event-handlers and dynamic behaviours set by the plugins -
       // so we need to wait for it to finish before initing
       setTimeout(function() {
         editElms.forEach(function (editElm) {
           if ( editElm.getAttribute('entrytype') === 'html' ) {
-            var transposeElms = $(pluginSelectors(), editElm);
             events.start.forEach(function (handler) {
               handler({
                 editElm: editElm,
-                transposeElms: transposeElms,
+                transposeElms: $(pluginSelectors(), editElm),
                 // transposeSelectors: pluginSelectors(),
               });
             });
             plugins.forEach(function (plugin) {
-              var consumables = $(plugin.selector, editElm);
-              consumables.forEach(function (elm) {
+              $(plugin.selector, editElm).forEach(function (elm) {
                 createWidget(plugin, elm, editElm);
               });
             });
@@ -196,7 +193,7 @@ var registerWithEditor = function (editor) {
 
 
     editor.addEvent('SaveStart', function (e) {
-      var editElm = e.target;
+      const editElm = e.target;
       if ( e.targetType === 'html' ) {
         // Signal to all widgets to re-render as static HTML
         widgets.forEach(function (widget) {
@@ -204,17 +201,16 @@ var registerWithEditor = function (editor) {
         });
         // Zap wrappers
         $('[data-transpozor-wrapper]', editElm).forEach(function (wrapper) {
-          var parent = wrapper.parentNode;
+          const parent = wrapper.parentNode;
           while ( wrapper.firstChild ) {
             parent.insertBefore(wrapper.firstChild, wrapper);
           }
           parent.removeChild(wrapper);
         });
-        var transposeElms = $(pluginSelectors(), editElm);
         events.end.forEach(function (handler) {
           handler({
             editElm: editElm,
-            transposeElms: transposeElms,
+            transposeElms: $(pluginSelectors(), editElm),
             // transposeSelectors: pluginSelectors(),
           });
         });
@@ -225,14 +221,14 @@ var registerWithEditor = function (editor) {
   return transpozor;
 };
 
-var addPlugin = function (plugin) {
+const addPlugin = function (plugin) {
   registerWithEditor(); // safe to run multiple times
   plugins.push(plugin);
   pluginsById[ plugin.id ] = plugin;
   return transpozor;
 };
 
-var addEvent = function (type, handler) {
+const addEvent = function (type, handler) {
   events[type].push(handler);
   return transpozor;
 };

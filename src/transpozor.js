@@ -10,12 +10,10 @@ var events = {
 
 // Element#matches normalization.
 var ep = Element.prototype;
-// Don't use `ep.is` to avoid invoking rollup's tree-shaking/dead-code-removal
-Element.prototype.is = ep.matches || ep.msMatchesSelector || ep.webkitMatchesSelector;
+ep.is = ep.matches || ep.msMatchesSelector || ep.webkitMatchesSelector;
 
 var $ = function (selector, elm) {
-  elm  = elm || document;
-  return !selector ? [] : [].slice.call( elm.querySelectorAll(selector) );
+  return !selector ? [] : [].slice.call( (elm||document).querySelectorAll(selector) );
 };
 
 

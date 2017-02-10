@@ -71,3 +71,12 @@ The widget instance that the plugin returns must expose a single method `.toHTML
 
 `.toHTML()` gets called with no parameters, just *before* the transpozor's `end` event. It should immediately destroy the editing interface, and render static HTML into its `wrapperElm`.
 
+
+
+## `widgetInstance.onRemove()` (Function, optional)
+
+This method is called when a user clicks the widget's "Remove" button, to allow cleanup, unmounting, etc.
+
+If the `.onRemove()` method returns a `boolean` value, that value is interpreted as a confirmation.  `true` removes the widget without further ado, while `false` cancels the removal.
+
+If `.onRemove()` is missing, or doesn't return a `boolean`, then a default `confirm()` prompt is displayed.

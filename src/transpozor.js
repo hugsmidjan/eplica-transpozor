@@ -13,9 +13,73 @@ const ep = Element.prototype;
 ep.is = ep.matches || ep.msMatchesSelector || ep.webkitMatchesSelector;
 
 
+
+const E = function (tagName, attrs) {
+  const elm = document.createElement(tagName);
+  if (attrs) {
+    for (let name in attrs) {
+      elm.setAttribute(name, attrs[name]);
+    }
+  }
+  if ( arguments.length > 2 ) {
+    const children = [].slice.call(arguments, 2);
+    children.forEach(child => {
+      if ( typeof child === 'string' ) {
+        child = document.createTextNode( child );
+      }
+      elm.appendChild( child );
+    });
+  }
+  return elm;
+};
+
 const $ = function (selector, elm) {
   return !selector ? [] : [].slice.call( (elm||document).querySelectorAll(selector) );
 };
+
+
+
+
+const makeWidgetToolbar = function ( widget, wrapperElm, actions) {
+  const removeBtn = E('button', { 'data-transpozor-button': 'remove', title: 'Remove' }, 'X');
+  removeBtn.addEventListener('click', function(){
+    const cancelledByWidget = widget.onRemove && widget.onRemove();
+    if ( cancelledByWidget != null ? cancelledByWidget : confirm('Remove Widget!?') ) {
+      actions.remove();
+      wrapperElm.parentNode.removeChild( wrapperElm );
+      const pos = widgets.indexOf( widget );
+      widgets.splice( pos, 1);
+    }
+  });
+
+  let relax;
+  const highlight = function () {
+    clearTimeout(relax);
+    relax = setTimeout(function () {
+      wrapperElm.setAttribute('data-transpozor-wrapper-active','');
+    }, 100);
+  }
+  const deHighlight = function () {
+    clearTimeout(relax);
+    relax = setTimeout(function () {
+      wrapperElm.removeAttribute('data-transpozor-wrapper-active');
+    }, 100);
+  }
+
+  const toolbar = E('div', {
+                    'data-transpozor-toolbar': '',
+                    lang: 'en',
+                  },
+                  removeBtn
+                );
+  toolbar.addEventListener('focusin', highlight);
+  toolbar.addEventListener('mouseenter', highlight);
+  toolbar.addEventListener('focusout', deHighlight);
+  toolbar.addEventListener('mouseleave', deHighlight);
+
+  return toolbar;
+};
+
 
 
 const defaultParseData = function (elm) {
@@ -24,8 +88,9 @@ const defaultParseData = function (elm) {
 
 const createWidget = function (plugin, elm, editElm, isInserting) {
   const data = (plugin.parseData||defaultParseData)(elm, editElm, isInserting);
-  const wrapperElm = document.createElement('div');
-  wrapperElm.setAttribute('data-transpozor-wrapper', '');
+
+  const containerElm = E('div', { 'data-transpozor-container':'' });
+  const wrapperElm = E('div', { 'data-transpozor-wrapper':'' }, containerElm);
 
   wrapperElm.addEventListener('paste', function(e){
     if ( e.target.is('input, textarea') ) {
@@ -96,9 +161,18 @@ const createWidget = function (plugin, elm, editElm, isInserting) {
   elm.parentNode.replaceChild(wrapperElm, elm);
   const newWidget = new plugin({
     data: data,
-    wrapperElm: wrapperElm,
+    wrapperElm: containerElm,
     editElm: editElm,
   });
+
+  const toolbar = makeWidgetToolbar(newWidget, wrapperElm, {
+    remove: () => {
+      editElm.removeEventListener('focus', lockWrapperElm, true);
+      editElm.removeEventListener('blur', unlockWrapperElm, true);
+    },
+  });
+  wrapperElm.appendChild( toolbar );
+
   widgets.push( newWidget );
 };
 
@@ -200,10 +274,11 @@ const registerWithEditor = function (editor) {
           widget.toHTML();
         });
         // Zap wrappers
-        $('[data-transpozor-wrapper]', editElm).forEach(function (wrapper) {
+        $('[data-transpozor-content]', editElm).forEach(container => {
+          const wrapper = container.parentNode;
           const parent = wrapper.parentNode;
-          while ( wrapper.firstChild ) {
-            parent.insertBefore(wrapper.firstChild, wrapper);
+          while ( container.firstChild ) {
+            parent.insertBefore(container.firstChild, wrapper);
           }
           parent.removeChild(wrapper);
         });

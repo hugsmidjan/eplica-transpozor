@@ -10,13 +10,76 @@ var events = {
 
 // Element#matches normalization.
 var ep = Element.prototype;
-// Don't use `ep.is` to avoid invoking rollup's tree-shaking/dead-code-removal
-Element.prototype.is = ep.matches || ep.msMatchesSelector || ep.webkitMatchesSelector;
+ep.is = ep.matches || ep.msMatchesSelector || ep.webkitMatchesSelector;
+
+
+
+var E = function (tagName, attrs) {
+  var elm = document.createElement(tagName);
+  if (attrs) {
+    for (var name in attrs) {
+      elm.setAttribute(name, attrs[name]);
+    }
+  }
+  if ( arguments.length > 2 ) {
+    var children = [].slice.call(arguments, 2);
+    children.forEach(function (child) {
+      if ( typeof child === 'string' ) {
+        child = document.createTextNode( child );
+      }
+      elm.appendChild( child );
+    });
+  }
+  return elm;
+};
 
 var $ = function (selector, elm) {
-  elm  = elm || document;
-  return !selector ? [] : [].slice.call( elm.querySelectorAll(selector) );
+  return !selector ? [] : [].slice.call( (elm||document).querySelectorAll(selector) );
 };
+
+
+
+
+var makeWidgetToolbar = function ( widget, wrapperElm, actions) {
+  var removeBtn = E('button', { 'data-transpozor-button': 'remove', title: 'Remove' }, 'X');
+  removeBtn.addEventListener('click', function(){
+    var cancelledByWidget = widget.onRemove && widget.onRemove();
+    if ( cancelledByWidget != null ? cancelledByWidget : confirm('Remove Widget!?') ) {
+      actions.remove();
+      wrapperElm.parentNode.removeChild( wrapperElm );
+      var pos = widgets.indexOf( widget );
+      widgets.splice( pos, 1);
+    }
+  });
+
+  var relax;
+  var highlight = function () {
+    clearTimeout(relax);
+    relax = setTimeout(function () {
+      wrapperElm.setAttribute('data-transpozor-wrapper-active','');
+    }, 100);
+  };
+  var deHighlight = function () {
+    clearTimeout(relax);
+    relax = setTimeout(function () {
+      wrapperElm.removeAttribute('data-transpozor-wrapper-active');
+    }, 100);
+  };
+
+  var toolbar = E('div', {
+                    'data-transpozor-toolbar': '',
+                    lang: 'en',
+                  },
+                  removeBtn
+                );
+  toolbar.addEventListener('focusin', highlight);
+  toolbar.addEventListener('mouseenter', highlight);
+  toolbar.addEventListener('focusout', deHighlight);
+  toolbar.addEventListener('mouseleave', deHighlight);
+
+  return toolbar;
+};
+
 
 
 var defaultParseData = function (elm) {
@@ -25,8 +88,9 @@ var defaultParseData = function (elm) {
 
 var createWidget = function (plugin, elm, editElm, isInserting) {
   var data = (plugin.parseData||defaultParseData)(elm, editElm, isInserting);
-  var wrapperElm = document.createElement('div');
-  wrapperElm.setAttribute('data-transpozor-wrapper', '');
+
+  var containerElm = E('div', { 'data-transpozor-container':'' });
+  var wrapperElm = E('div', { 'data-transpozor-wrapper':'' }, containerElm);
 
   wrapperElm.addEventListener('paste', function(e){
     if ( e.target.is('input, textarea') ) {
@@ -46,9 +110,7 @@ var createWidget = function (plugin, elm, editElm, isInserting) {
       // to run its course and the inline-editor to inject the pasted content
       // into place.
       wrapperElm.contentEditable = true;
-      setTimeout(function(){
-        wrapperElm.contentEditable = false;
-      }, 500);
+      setTimeout(function (){ wrapperElm.contentEditable = false; }, 500);
     }
   }, true);
   // Problem:
@@ -99,9 +161,19 @@ var createWidget = function (plugin, elm, editElm, isInserting) {
   elm.parentNode.replaceChild(wrapperElm, elm);
   var newWidget = new plugin({
     data: data,
-    wrapperElm: wrapperElm,
+    rootElm: containerElm,
     editElm: editElm,
+    /* DEPRICATED */wrapperElm: containerElm,
   });
+
+  var toolbar = makeWidgetToolbar(newWidget, wrapperElm, {
+    remove: function () {
+      editElm.removeEventListener('focus', lockWrapperElm, true);
+      editElm.removeEventListener('blur', unlockWrapperElm, true);
+    },
+  });
+  wrapperElm.appendChild( toolbar );
+
   widgets.push( newWidget );
 };
 
@@ -115,7 +187,7 @@ var scanForInsertMarkers = function () {
   //     <img data-transpozor-insert="pluginId" onload="EPLICA.inlineEditor.transpozor.rescan()" src="https://eplica-cdn.is/f/e2-w.png" />
   //
   // JavaScript injection example:
-  //     var widgetMarker = document.createElement('div');
+  //     const widgetMarker = document.createElement('div');
   //     widgetMarker.setAttribute('data-transpozor-insert', 'pluginId');
   //     editElm.appendChild( widgetMarker );
   //     transpozor.rescan();
@@ -176,17 +248,15 @@ var registerWithEditor = function (editor) {
       setTimeout(function() {
         editElms.forEach(function (editElm) {
           if ( editElm.getAttribute('entrytype') === 'html' ) {
-            var transposeElms = $(pluginSelectors(), editElm);
             events.start.forEach(function (handler) {
               handler({
                 editElm: editElm,
-                transposeElms: transposeElms,
+                transposeElms: $(pluginSelectors(), editElm),
                 // transposeSelectors: pluginSelectors(),
               });
             });
             plugins.forEach(function (plugin) {
-              var consumables = $(plugin.selector, editElm);
-              consumables.forEach(function (elm) {
+              $(plugin.selector, editElm).forEach(function (elm) {
                 createWidget(plugin, elm, editElm);
               });
             });
@@ -205,18 +275,18 @@ var registerWithEditor = function (editor) {
           widget.toHTML();
         });
         // Zap wrappers
-        $('[data-transpozor-wrapper]', editElm).forEach(function (wrapper) {
+        $('[data-transpozor-content]', editElm).forEach(function (container) {
+          var wrapper = container.parentNode;
           var parent = wrapper.parentNode;
-          while ( wrapper.firstChild ) {
-            parent.insertBefore(wrapper.firstChild, wrapper);
+          while ( container.firstChild ) {
+            parent.insertBefore(container.firstChild, wrapper);
           }
           parent.removeChild(wrapper);
         });
-        var transposeElms = $(pluginSelectors(), editElm);
         events.end.forEach(function (handler) {
           handler({
             editElm: editElm,
-            transposeElms: transposeElms,
+            transposeElms: $(pluginSelectors(), editElm),
             // transposeSelectors: pluginSelectors(),
           });
         });
@@ -252,3 +322,4 @@ transpozor = {
 var transpozor$1 = transpozor;
 
 export default transpozor$1;
+//# sourceMappingURL=transpozor.js.map

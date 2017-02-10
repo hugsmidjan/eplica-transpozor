@@ -161,8 +161,9 @@ const createWidget = function (plugin, elm, editElm, isInserting) {
   elm.parentNode.replaceChild(wrapperElm, elm);
   const newWidget = new plugin({
     data: data,
-    wrapperElm: containerElm,
+    rootElm: containerElm,
     editElm: editElm,
+    /* DEPRICATED */wrapperElm: containerElm,
   });
 
   const toolbar = makeWidgetToolbar(newWidget, wrapperElm, {

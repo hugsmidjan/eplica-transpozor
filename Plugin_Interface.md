@@ -49,7 +49,7 @@ The method may `return false` to cancel the insertion altogether.
 
 
 
-## `Plugin({ data, wrapperElm, editElm })` (Function)
+## `Plugin({ data, rootElm, editElm })` (Function)
 
 The Plugin itself must be function that A) returns a new widget instance object and B) immediately starts up the editing interface.
 
@@ -59,7 +59,7 @@ The factory function/contstructor is invoked right *after* the transpozor's `sta
 
 `props.data` is whatever was returned by the plugin's `.parseData()` method (or the transpozors manager's `defaultParseData()` function).
 
-`props.wrapperElm` is the sandboxed container element the transpozor manager provides for this widget instance to host its editing interface and eventual `.toHTML()` export.
+`props.rootElm` is the sandboxed container element the transpozor manager provides for this widget instance to host its editing interface and eventual `.toHTML()` export.
 
 `props.editElm` is the widget instance's related inline-editing element
 
@@ -69,7 +69,7 @@ The factory function/contstructor is invoked right *after* the transpozor's `sta
 
 The widget instance that the plugin returns must expose a single method `.toHTML()`.
 
-`.toHTML()` gets called with no parameters, just *before* the transpozor's `end` event. It should immediately destroy the editing interface, and render static HTML into its `wrapperElm`.
+`.toHTML()` gets called with no parameters, just *before* the transpozor's `end` event. It should immediately destroy the editing interface, and render static HTML into its `rootElm`.
 
 
 

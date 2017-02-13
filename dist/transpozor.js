@@ -275,7 +275,7 @@ var registerWithEditor = function (editor) {
           widget.toHTML();
         });
         // Zap wrappers
-        $('[data-transpozor-content]', editElm).forEach(function (container) {
+        $('[data-transpozor-container]', editElm).forEach(function (container) {
           var wrapper = container.parentNode;
           var parent = wrapper.parentNode;
           while ( container.firstChild ) {

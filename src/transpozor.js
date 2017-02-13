@@ -18,7 +18,18 @@ const E = function (tagName, attrs) {
   const elm = document.createElement(tagName);
   if (attrs) {
     for (let name in attrs) {
-      elm.setAttribute(name, attrs[name]);
+      const value = attrs[name];
+      if ( value != null ) {
+        if ( (/^on[A-Z]/).test(name) ) {
+          elm.addEventListener(name.substr(2).toLowerCase(), value);
+        }
+        else if ( name.charAt(0) === '_' ) {
+          elm[name.substr(1)] = value;
+        }
+        else {
+          elm.setAttribute(name, value);
+        }
+      }
     }
   }
   if ( arguments.length > 2 ) {
@@ -41,16 +52,19 @@ const $ = function (selector, elm) {
 
 
 const makeWidgetToolbar = function ( widget, wrapperElm, actions) {
-  const removeBtn = E('button', { 'data-transpozor-button': 'remove', title: 'Remove' }, 'X');
-  removeBtn.addEventListener('click', function(){
-    const cancelledByWidget = widget.onRemove && widget.onRemove();
-    if ( cancelledByWidget != null ? cancelledByWidget : confirm('Remove Widget!?') ) {
-      actions.remove();
-      wrapperElm.parentNode.removeChild( wrapperElm );
-      const pos = widgets.indexOf( widget );
-      widgets.splice( pos, 1);
-    }
-  });
+  const removeBtn = E('button', {
+                      'data-transpozor-button': 'remove',
+                        onClick: function (/*e*/) {
+                        const cancelledByWidget = widget.onRemove && widget.onRemove();
+                        if ( cancelledByWidget != null ? cancelledByWidget : confirm('Remove Widget!?') ) {
+                          actions.remove();
+                          wrapperElm.parentNode.removeChild( wrapperElm );
+                          const pos = widgets.indexOf( widget );
+                          widgets.splice( pos, 1);
+                        }
+                      },
+                      title: 'Remove',
+                    }, 'X');
 
   let relax;
   const highlight = function () {
@@ -66,18 +80,16 @@ const makeWidgetToolbar = function ( widget, wrapperElm, actions) {
     }, 100);
   }
 
-  const toolbar = E('div', {
-                    'data-transpozor-toolbar': '',
-                    lang: 'en',
-                  },
-                  removeBtn
-                );
-  toolbar.addEventListener('focusin', highlight);
-  toolbar.addEventListener('mouseenter', highlight);
-  toolbar.addEventListener('focusout', deHighlight);
-  toolbar.addEventListener('mouseleave', deHighlight);
-
-  return toolbar;
+  return  E('div', {
+              'data-transpozor-toolbar': '',
+              lang: 'en',
+              onFocusin: highlight,
+              onMouseenter: highlight,
+              onFocusout: deHighlight,
+              onMouseleave: deHighlight,
+            },
+            removeBtn
+          );
 };
 
 

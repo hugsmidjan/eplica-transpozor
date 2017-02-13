@@ -18,7 +18,18 @@ var E = function (tagName, attrs) {
   var elm = document.createElement(tagName);
   if (attrs) {
     for (var name in attrs) {
-      elm.setAttribute(name, attrs[name]);
+      var value = attrs[name];
+      if ( value != null ) {
+        if ( (/^on[A-Z]/).test(name) ) {
+          elm.addEventListener(name.substr(2).toLowerCase(), value);
+        }
+        else if ( name.charAt(0) === '_' ) {
+          elm[name.substr(1)] = value;
+        }
+        else {
+          elm.setAttribute(name, value);
+        }
+      }
     }
   }
   if ( arguments.length > 2 ) {
@@ -41,16 +52,45 @@ var $ = function (selector, elm) {
 
 
 var makeWidgetToolbar = function ( widget, wrapperElm, actions) {
-  var removeBtn = E('button', { 'data-transpozor-button': 'remove', title: 'Remove' }, 'X');
-  removeBtn.addEventListener('click', function(){
-    var cancelledByWidget = widget.onRemove && widget.onRemove();
-    if ( cancelledByWidget != null ? cancelledByWidget : confirm('Remove Widget!?') ) {
-      actions.remove();
-      wrapperElm.parentNode.removeChild( wrapperElm );
-      var pos = widgets.indexOf( widget );
-      widgets.splice( pos, 1);
-    }
-  });
+  var removeBtn = E('button', {
+                      'data-transpozor-button': 'remove',
+                        onClick: function (/*e*/) {
+                        var cancelledByWidget = widget.onRemove && widget.onRemove();
+                        if ( cancelledByWidget != null ? cancelledByWidget : confirm('Remove Widget!?') ) {
+                          actions.remove();
+                          wrapperElm.parentNode.removeChild( wrapperElm );
+                          var pos = widgets.indexOf( widget );
+                          widgets.splice( pos, 1);
+                        }
+                      },
+                      title: 'Remove',
+                    }, 'X');
+  var moveupBtn = E('button', {
+                      'data-transpozor-button': 'moveup',
+                      onClick: function (/*e*/) {
+                        var prevElm = wrapperElm.previousElementSibling;
+                        if ( prevElm ) {
+                          wrapperElm.parentNode.insertBefore(wrapperElm, prevElm);
+                          moveupBtn.disabled = !wrapperElm.previousSibling;
+                          movedownBtn.disabled = !wrapperElm.nextSibling;
+                        }
+                      },
+                      _disabled: !wrapperElm.previousSibling,
+                      title: 'Move Up',
+                    }, '↑');
+  var movedownBtn = E('button', {
+                      'data-transpozor-button': 'movedown',
+                      onClick: function (/*e*/) {
+                        var nextElm = wrapperElm.nextElementSibling;
+                        if ( nextElm ) {
+                          wrapperElm.parentNode.insertBefore(wrapperElm, nextElm.nextSibling);
+                          moveupBtn.disabled = !wrapperElm.previousSibling;
+                          movedownBtn.disabled = !wrapperElm.nextSibling;
+                        }
+                      },
+                      _disabled: !wrapperElm.nextSibling,
+                      title: 'Move Down',
+                    }, '↓');
 
   var relax;
   var highlight = function () {
@@ -66,18 +106,18 @@ var makeWidgetToolbar = function ( widget, wrapperElm, actions) {
     }, 100);
   };
 
-  var toolbar = E('div', {
-                    'data-transpozor-toolbar': '',
-                    lang: 'en',
-                  },
-                  removeBtn
-                );
-  toolbar.addEventListener('focusin', highlight);
-  toolbar.addEventListener('mouseenter', highlight);
-  toolbar.addEventListener('focusout', deHighlight);
-  toolbar.addEventListener('mouseleave', deHighlight);
-
-  return toolbar;
+  return  E('div', {
+              'data-transpozor-toolbar': '',
+              lang: 'en',
+              onFocusin: highlight,
+              onMouseenter: highlight,
+              onFocusout: deHighlight,
+              onMouseleave: deHighlight,
+            },
+            moveupBtn,
+            movedownBtn,
+            removeBtn
+          );
 };
 
 

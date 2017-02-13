@@ -65,6 +65,32 @@ const makeWidgetToolbar = function ( widget, wrapperElm, actions) {
                       },
                       title: 'Remove',
                     }, 'X');
+  const moveupBtn = E('button', {
+                      'data-transpozor-button': 'moveup',
+                      onClick: function (/*e*/) {
+                        let prevElm = wrapperElm.previousElementSibling;
+                        if ( prevElm ) {
+                          wrapperElm.parentNode.insertBefore(wrapperElm, prevElm);
+                          moveupBtn.disabled = !wrapperElm.previousSibling;
+                          movedownBtn.disabled = !wrapperElm.nextSibling;
+                        }
+                      },
+                      _disabled: !wrapperElm.previousSibling,
+                      title: 'Move Up',
+                    }, '↑');
+  const movedownBtn = E('button', {
+                      'data-transpozor-button': 'movedown',
+                      onClick: function (/*e*/) {
+                        let nextElm = wrapperElm.nextElementSibling;
+                        if ( nextElm ) {
+                          wrapperElm.parentNode.insertBefore(wrapperElm, nextElm.nextSibling);
+                          moveupBtn.disabled = !wrapperElm.previousSibling;
+                          movedownBtn.disabled = !wrapperElm.nextSibling;
+                        }
+                      },
+                      _disabled: !wrapperElm.nextSibling,
+                      title: 'Move Down',
+                    }, '↓');
 
   let relax;
   const highlight = function () {
@@ -88,6 +114,8 @@ const makeWidgetToolbar = function ( widget, wrapperElm, actions) {
               onFocusout: deHighlight,
               onMouseleave: deHighlight,
             },
+            moveupBtn,
+            movedownBtn,
             removeBtn
           );
 };

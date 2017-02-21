@@ -51,7 +51,8 @@ const $ = function (selector, elm) {
 
 
 
-const makeWidgetToolbar = function ( widget, wrapperElm, actions) {
+const makeWidgetToolbar = function ( widget, actions) {
+  const wrapperElm = widget.wrapperElm;
   const removeBtn = E('button', {
                       'data-transpozor-button': 'remove',
                         onClick: function (/*e*/) {
@@ -205,8 +206,9 @@ const createWidget = function (plugin, elm, editElm, isInserting) {
     editElm: editElm,
     /* DEPRICATED */wrapperElm: containerElm,
   });
+  newWidget.wrapperElm = wrapperElm;
 
-  const toolbar = makeWidgetToolbar(newWidget, wrapperElm, {
+  const toolbar = makeWidgetToolbar(newWidget, {
     remove: () => {
       editElm.removeEventListener('focus', lockWrapperElm, true);
       editElm.removeEventListener('blur', unlockWrapperElm, true);
@@ -311,8 +313,18 @@ const registerWithEditor = function (editor) {
       const editElm = e.target;
       if ( e.targetType === 'html' ) {
         // Signal to all widgets to re-render as static HTML
-        widgets.forEach(function (widget) {
-          widget.toHTML();
+        widgets.slice().forEach(function (widget, i) {
+          let widgetEditElm = widget.editElm;
+          if ( !widgetEditElm ) {
+            widgetEditElm = widget.wrapperElm;
+            while ( widgetEditElm && !widgetEditElm.is('.EPLICA_editzone') ) {
+              widgetEditElm = widgetEditElm.parentNode;
+            }
+          }
+          if ( widgetEditElm === editElm ) {
+            widget.toHTML();
+            widgets.splice(i,1);
+          }
         });
         // Zap wrappers
         $('[data-transpozor-container]', editElm).forEach(container => {

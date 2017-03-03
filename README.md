@@ -87,7 +87,7 @@ If you want to manually control when the transpozor registers with the inline-ed
 transpozor.registerWithEditor();
 
 editor.addEvent('EditorOpen', someOpenHandler);
-editor.addEvent('SaveStart', someSaveHandler);
+editor.addEvent('Save', someSaveHandler);
 
 transpozor
     .on('start', eventHandler)

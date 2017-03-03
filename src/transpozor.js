@@ -130,8 +130,9 @@ const defaultParseData = function (elm) {
 const createWidget = function (plugin, elm, editElm, isInserting) {
   const data = (plugin.parseData||defaultParseData)(elm, editElm, isInserting);
 
-  const containerElm = E('div', { 'data-transpozor-container':'' });
-  const wrapperElm = E('div', { 'data-transpozor-wrapper':'' }, containerElm);
+  // Add class="." to sidestep Inline Editor's "Class-/ID-less <div> and <span> cleanup" phase
+  const containerElm = E('div', { class:'.', 'data-transpozor-container':'' });
+  const wrapperElm = E('div', { class:'.', 'data-transpozor-wrapper':'' }, containerElm);
 
   wrapperElm.addEventListener('paste', function(e){
     if ( e.target.is('input, textarea') ) {
@@ -309,7 +310,10 @@ const registerWithEditor = function (editor) {
     });
 
 
-    editor.addEvent('SaveStart', function (e) {
+    // Allow opting in to using 'SaveStart' event - to support older (<4.1.3) EPLICA versions.
+    const saveEvent = transpozor.undocumented_option_useSaveStartEvent ? 'SaveStart' : 'Save';
+
+    editor.addEvent(saveEvent, function (e) {
       const editElm = e.target;
       if ( e.targetType === 'html' ) {
         // Signal to all widgets to re-render as static HTML

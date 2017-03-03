@@ -10,7 +10,7 @@ The Eplica Transpozor manages the lifecycle of specially written Eplica Inline E
 
 The transpozor depends on the `EPLICA` global object being defined, and containing the `inlineEditor` object.  (Both those conditions are automatically met when Eplica Webmasters are logged in.)
 
-In a website's `editorStylingRules.js` file add the import the transpozor:
+So an ideal place to import the transpozor would be in a website's `editorStylingRules.js` file:
 
 ```js
 import transpozor from 'eplica-transpozor';
@@ -50,9 +50,9 @@ transpozor
       });
 ```
 
-The `start` event triggers as the Inline Editor is starting, just before the transpozor searches each inline-editor element for transposable content.
+The `start` event triggers as the Inline Editor is starting (during the `EditorOpen` phase), just before the transpozor searches each inline-editor element for transposable content.
 
-The `end` event triggers for each inline-editor element early in the Save phase, as soon as the transposing editing UIs have been converted back to its final HTML form.
+The `end` event triggers for each inline-editor element during the `Save` phase, as soon as the transposing editing UIs have been converted back to its final HTML form.
 
 
 
@@ -81,11 +81,10 @@ transpozor.rescan();
 
 ## Advanced Usage
 
-If you want to manually control when the transpozor registers with the inline-editor (i.e. not wait until `.addPlugin()` is first called), you must call the `.registerWithEditor()` method. (and optionally feed it a custom editor instance).
+If you want to manually control when the transpozor registers with the inline-editor (i.e. not wait until `.addPlugin()` is first called), you must call the `.registerWithEditor()` method. (BTW You can optionally feed it a custom editor instance).
 
 ```js
-transpozor
-    .registerWithEditor();
+transpozor.registerWithEditor();
 
 editor.addEvent('EditorOpen', someOpenHandler);
 editor.addEvent('SaveStart', someSaveHandler);

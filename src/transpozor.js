@@ -311,7 +311,9 @@ const registerWithEditor = (editor) => {
       const editElm = e.target;
       if ( e.targetType === 'html' ) {
         // Signal to all widgets to re-render as static HTML
+        const widgetToHtmlReturns = []
         widgets.slice().forEach((widget, i) => {
+        // const widgetToHtmlReturns = widgets.slice().map((widget, i) => {
           let widgetEditElm = widget.editElm;
           if ( !widgetEditElm ) {
             widgetEditElm = widget.wrapperElm;
@@ -320,26 +322,42 @@ const registerWithEditor = (editor) => {
             }
           }
           if ( widgetEditElm === editElm ) {
-            widget.toHTML();
             widgets.splice(i,1);
+            // return widget.toHTML();
+            const ret = widget.toHTML();
+            if ( ret && ret.then ) {
+              widgetToHtmlReturns.push(ret);
+            }
           }
         });
-        // Zap wrappers
-        $('[data-transpozor-container]', editElm).forEach((container) => {
-          const wrapper = container.parentNode;
-          const parent = wrapper.parentNode;
-          while ( container.firstChild ) {
-            parent.insertBefore(container.firstChild, wrapper);
-          }
-          parent.removeChild(wrapper);
-        });
-        events.end.forEach((handler) => {
-          handler({
-            editElm: editElm,
-            transposeElms: $(pluginSelectors(), editElm),
-            // transposeSelectors: pluginSelectors(),
+        const zapWrappersAndEmitEnd = () => {
+          // Zap wrappers
+          $('[data-transpozor-container]', editElm).forEach((container) => {
+            const wrapper = container.parentNode;
+            const parent = wrapper.parentNode;
+            while ( container.firstChild ) {
+              parent.insertBefore(container.firstChild, wrapper);
+            }
+            parent.removeChild(wrapper);
           });
-        });
+          events.end.forEach((handler) => {
+            handler({
+              editElm: editElm,
+              transposeElms: $(pluginSelectors(), editElm),
+              // transposeSelectors: pluginSelectors(),
+            });
+          });
+          return; // explicitly return undefined.
+        };
+        // Maintain backwards compatibility with Eplica versions (<4.1.4)
+        // by only return a promise if the widgets return promises
+        if ( widgetToHtmlReturns.length ) {
+          return Promise.all( widgetToHtmlReturns )
+              .then( zapWrappersAndEmitEnd );
+        }
+        // FIXME: Always return a promise when all eplica-transpozor using websites
+        // have been updated to a newer (promise-supporting editor) version of Eplica.
+        zapWrappersAndEmitEnd();
       }
     });
 

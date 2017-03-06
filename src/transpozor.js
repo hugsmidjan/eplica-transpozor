@@ -51,11 +51,11 @@ const $ = function (selector, elm) {
 
 
 
-const makeWidgetToolbar = function ( widget, actions) {
+const makeWidgetToolbar = function (widget, actions) {
   const wrapperElm = widget.wrapperElm;
   const removeBtn = E('button', {
                       'data-transpozor-button': 'remove',
-                        onClick: function (/*e*/) {
+                      onClick: function (/*e*/) {
                         const cancelledByWidget = widget.onRemove && widget.onRemove();
                         if ( cancelledByWidget != null ? cancelledByWidget : confirm('Remove Widget!?') ) {
                           actions.remove();

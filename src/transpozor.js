@@ -44,18 +44,16 @@ const E = function (tagName, attrs) {
   return elm;
 };
 
-const $ = function (selector, elm) {
-  return !selector ? [] : [].slice.call( (elm||document).querySelectorAll(selector) );
-};
+const $ = (selector, elm) =>  !selector ? [] : [].slice.call( (elm||document).querySelectorAll(selector) );
 
 
 
 
-const makeWidgetToolbar = function (widget, actions) {
+const makeWidgetToolbar = (widget, actions) => {
   const wrapperElm = widget.wrapperElm;
   const removeBtn = E('button', {
                       'data-transpozor-button': 'remove',
-                      onClick: function (/*e*/) {
+                      onClick: (/*e*/) => {
                         const cancelledByWidget = widget.onRemove && widget.onRemove();
                         if ( cancelledByWidget != null ? cancelledByWidget : confirm('Remove Widget!?') ) {
                           actions.remove();
@@ -68,7 +66,7 @@ const makeWidgetToolbar = function (widget, actions) {
                     }, 'X');
   const moveupBtn = E('button', {
                       'data-transpozor-button': 'moveup',
-                      onClick: function (/*e*/) {
+                      onClick: (/*e*/) => {
                         let prevElm = wrapperElm.previousElementSibling;
                         if ( prevElm ) {
                           wrapperElm.parentNode.insertBefore(wrapperElm, prevElm);
@@ -81,7 +79,7 @@ const makeWidgetToolbar = function (widget, actions) {
                     }, '↑');
   const movedownBtn = E('button', {
                       'data-transpozor-button': 'movedown',
-                      onClick: function (/*e*/) {
+                      onClick: (/*e*/) => {
                         let nextElm = wrapperElm.nextElementSibling;
                         if ( nextElm ) {
                           wrapperElm.parentNode.insertBefore(wrapperElm, nextElm.nextSibling);
@@ -94,15 +92,15 @@ const makeWidgetToolbar = function (widget, actions) {
                     }, '↓');
 
   let relax;
-  const highlight = function () {
+  const highlight = () => {
     clearTimeout(relax);
-    relax = setTimeout(function () {
+    relax = setTimeout(() => {
       wrapperElm.setAttribute('data-transpozor-wrapper-active','');
     }, 100);
   }
-  const deHighlight = function () {
+  const deHighlight = () => {
     clearTimeout(relax);
-    relax = setTimeout(function () {
+    relax = setTimeout(() => {
       wrapperElm.removeAttribute('data-transpozor-wrapper-active');
     }, 100);
   }
@@ -123,18 +121,17 @@ const makeWidgetToolbar = function (widget, actions) {
 
 
 
-const defaultParseData = function (elm) {
-  return JSON.parse( elm.getAttribute('data-transpozor') ) || {};
-};
+const defaultParseData = (elm) => JSON.parse( elm.getAttribute('data-transpozor') ) || {};
 
-const createWidget = function (plugin, elm, editElm, isInserting) {
+
+const createWidget = (plugin, elm, editElm, isInserting) => {
   const data = (plugin.parseData||defaultParseData)(elm, editElm, isInserting);
 
   // Add class="." to sidestep Inline Editor's "Class-/ID-less <div> and <span> cleanup" phase
   const containerElm = E('div', { class:'.', 'data-transpozor-container':'' });
   const wrapperElm = E('div', { class:'.', 'data-transpozor-wrapper':'' }, containerElm);
 
-  wrapperElm.addEventListener('paste', function(e){
+  wrapperElm.addEventListener('paste', (e) => {
     if ( e.target.is('input, textarea') ) {
       e.stopPropagation();
     }
@@ -165,7 +162,7 @@ const createWidget = function (plugin, elm, editElm, isInserting) {
   // Toolbar clicks inherently blur the editElm so we make the
   // contentEditable lock/scoping off-by-default and only
   // turn it on while editElm has focus.
-  const isExternallySourced = function (e) {
+  const isExternallySourced = (e) => {
     return  (
       !e.relatedTarget ||
       ( !e.relatedTarget.contains(e.target) &&
@@ -173,12 +170,12 @@ const createWidget = function (plugin, elm, editElm, isInserting) {
       )
     );
   };
-  const lockWrapperElm = function(e){
+  const lockWrapperElm = (e) => {
     if (wrapperElm.contedEditable !== 'false' && isExternallySourced(e) ) {
       wrapperElm.contentEditable = false;
     }
   };
-  const unlockWrapperElm = function(e){
+  const unlockWrapperElm = (e) => {
     if (wrapperElm.contedEditable !== 'true' && isExternallySourced(e) ) {
       wrapperElm.contentEditable = true;
     }
@@ -225,7 +222,7 @@ const createWidget = function (plugin, elm, editElm, isInserting) {
 // When the user injects one or more new/empty widgets
 // into an editElm, this function gets called to initialize the
 // inserted empty widget-markers.
-const scanForInsertMarkers = function () {
+const scanForInsertMarkers = () => {
   // HTML-Snippet (Greinaklippur) example:
   //     <img data-transpozor-insert="pluginId" onload="EPLICA.inlineEditor.transpozor.rescan()" src="https://eplica-cdn.is/f/e2-w.png" />
   //
@@ -235,7 +232,7 @@ const scanForInsertMarkers = function () {
   //     editElm.appendChild( widgetMarker );
   //     transpozor.rescan();
   //
-  $('[data-transpozor-insert]').forEach(function (placeholderElm) {
+  $('[data-transpozor-insert]').forEach((placeholderElm) => {
     const type = placeholderElm.getAttribute('data-transpozor-insert');
     const plugin = pluginsById[type];
     if ( plugin ) {
@@ -264,7 +261,7 @@ const scanForInsertMarkers = function () {
 
 
 let _registered;
-const registerWithEditor = function (editor) {
+const registerWithEditor = (editor) => {
   if ( !_registered ) {
     _registered = true;
 
@@ -274,32 +271,32 @@ const registerWithEditor = function (editor) {
     editor.transpozor = transpozor;
 
     let _pluginSelectors;
-    const pluginSelectors = function () {
+    const pluginSelectors = () => {
       if ( _pluginSelectors === undefined ) {
         _pluginSelectors = plugins
-            .map(function (plugin) { return plugin.selector; })
+            .map((plugin) => plugin.selector)
             .join(', ');
       }
       return _pluginSelectors;
     };
 
-    editor.addEvent('EditorOpen', function (e) {
+    editor.addEvent('EditorOpen', (e) => {
       const editElms = e.editElms;
       // Something in the Editor activation process messes with
       // event-handlers and dynamic behaviours set by the plugins -
       // so we need to wait for it to finish before initing
-      setTimeout(function() {
-        editElms.forEach(function (editElm) {
+      setTimeout(() => {
+        editElms.forEach((editElm) => {
           if ( editElm.getAttribute('entrytype') === 'html' ) {
-            events.start.forEach(function (handler) {
+            events.start.forEach((handler) => {
               handler({
                 editElm: editElm,
                 transposeElms: $(pluginSelectors(), editElm),
                 // transposeSelectors: pluginSelectors(),
               });
             });
-            plugins.forEach(function (plugin) {
-              $(plugin.selector, editElm).forEach(function (elm) {
+            plugins.forEach((plugin) => {
+              $(plugin.selector, editElm).forEach((elm) => {
                 createWidget(plugin, elm, editElm);
               });
             });
@@ -313,11 +310,11 @@ const registerWithEditor = function (editor) {
     // Allow opting in to using 'SaveStart' event - to support older (<4.1.3) EPLICA versions.
     const saveEvent = transpozor.undocumented_option_useSaveStartEvent ? 'SaveStart' : 'Save';
 
-    editor.addEvent(saveEvent, function (e) {
+    editor.addEvent(saveEvent, (e) => {
       const editElm = e.target;
       if ( e.targetType === 'html' ) {
         // Signal to all widgets to re-render as static HTML
-        widgets.slice().forEach(function (widget, i) {
+        widgets.slice().forEach((widget, i) => {
           let widgetEditElm = widget.editElm;
           if ( !widgetEditElm ) {
             widgetEditElm = widget.wrapperElm;
@@ -331,7 +328,7 @@ const registerWithEditor = function (editor) {
           }
         });
         // Zap wrappers
-        $('[data-transpozor-container]', editElm).forEach(container => {
+        $('[data-transpozor-container]', editElm).forEach((container) => {
           const wrapper = container.parentNode;
           const parent = wrapper.parentNode;
           while ( container.firstChild ) {
@@ -339,7 +336,7 @@ const registerWithEditor = function (editor) {
           }
           parent.removeChild(wrapper);
         });
-        events.end.forEach(function (handler) {
+        events.end.forEach((handler) => {
           handler({
             editElm: editElm,
             transposeElms: $(pluginSelectors(), editElm),
@@ -353,14 +350,14 @@ const registerWithEditor = function (editor) {
   return transpozor;
 };
 
-const addPlugin = function (plugin) {
+const addPlugin = (plugin) => {
   registerWithEditor(); // safe to run multiple times
   plugins.push(plugin);
   pluginsById[ plugin.id ] = plugin;
   return transpozor;
 };
 
-const addEvent = function (type, handler) {
+const addEvent = (type, handler) => {
   events[type].push(handler);
   return transpozor;
 };

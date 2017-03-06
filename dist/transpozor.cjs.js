@@ -17,6 +17,9 @@ ep.is = ep.matches || ep.msMatchesSelector || ep.webkitMatchesSelector;
 
 
 var E = function (tagName, attrs) {
+  var children = [], len = arguments.length - 2;
+  while ( len-- > 0 ) children[ len ] = arguments[ len + 2 ];
+
   var elm = document.createElement(tagName);
   if (attrs) {
     for (var name in attrs) {
@@ -34,30 +37,25 @@ var E = function (tagName, attrs) {
       }
     }
   }
-  if ( arguments.length > 2 ) {
-    var children = [].slice.call(arguments, 2);
-    children.forEach(function (child) {
-      if ( typeof child === 'string' ) {
-        child = document.createTextNode( child );
-      }
-      elm.appendChild( child );
-    });
-  }
+  children.forEach(function (child) {
+    if ( typeof child === 'string' ) {
+      child = document.createTextNode( child );
+    }
+    elm.appendChild( child );
+  });
   return elm;
 };
 
-var $ = function (selector, elm) {
-  return !selector ? [] : [].slice.call( (elm||document).querySelectorAll(selector) );
-};
+var $ = function (selector, elm) { return !selector ? [] : [].slice.call( (elm||document).querySelectorAll(selector) ); };
 
 
 
 
-var makeWidgetToolbar = function ( widget, actions) {
+var makeWidgetToolbar = function (widget, actions) {
   var wrapperElm = widget.wrapperElm;
   var removeBtn = E('button', {
                       'data-transpozor-button': 'remove',
-                        onClick: function (/*e*/) {
+                      onClick: function (/*e*/) {
                         var cancelledByWidget = widget.onRemove && widget.onRemove();
                         if ( cancelledByWidget != null ? cancelledByWidget : confirm('Remove Widget!?') ) {
                           actions.remove();
@@ -125,9 +123,8 @@ var makeWidgetToolbar = function ( widget, actions) {
 
 
 
-var defaultParseData = function (elm) {
-  return JSON.parse( elm.getAttribute('data-transpozor') ) || {};
-};
+var defaultParseData = function (elm) { return JSON.parse( elm.getAttribute('data-transpozor') ) || {}; };
+
 
 var createWidget = function (plugin, elm, editElm, isInserting) {
   var data = (plugin.parseData||defaultParseData)(elm, editElm, isInserting);
@@ -136,7 +133,7 @@ var createWidget = function (plugin, elm, editElm, isInserting) {
   var containerElm = E('div', { class:'.', 'data-transpozor-container':'' });
   var wrapperElm = E('div', { class:'.', 'data-transpozor-wrapper':'' }, containerElm);
 
-  wrapperElm.addEventListener('paste', function(e){
+  wrapperElm.addEventListener('paste', function (e) {
     if ( e.target.is('input, textarea') ) {
       e.stopPropagation();
     }
@@ -175,12 +172,12 @@ var createWidget = function (plugin, elm, editElm, isInserting) {
       )
     );
   };
-  var lockWrapperElm = function(e){
+  var lockWrapperElm = function (e) {
     if (wrapperElm.contedEditable !== 'false' && isExternallySourced(e) ) {
       wrapperElm.contentEditable = false;
     }
   };
-  var unlockWrapperElm = function(e){
+  var unlockWrapperElm = function (e) {
     if (wrapperElm.contedEditable !== 'true' && isExternallySourced(e) ) {
       wrapperElm.contentEditable = true;
     }
@@ -290,7 +287,7 @@ var registerWithEditor = function (editor) {
       // Something in the Editor activation process messes with
       // event-handlers and dynamic behaviours set by the plugins -
       // so we need to wait for it to finish before initing
-      setTimeout(function() {
+      setTimeout(function () {
         editElms.forEach(function (editElm) {
           if ( editElm.getAttribute('entrytype') === 'html' ) {
             events.start.forEach(function (handler) {
@@ -319,7 +316,9 @@ var registerWithEditor = function (editor) {
       var editElm = e.target;
       if ( e.targetType === 'html' ) {
         // Signal to all widgets to re-render as static HTML
+        var widgetToHtmlReturns = [];
         widgets.slice().forEach(function (widget, i) {
+        // const widgetToHtmlReturns = widgets.slice().map((widget, i) => {
           var widgetEditElm = widget.editElm;
           if ( !widgetEditElm ) {
             widgetEditElm = widget.wrapperElm;
@@ -328,26 +327,42 @@ var registerWithEditor = function (editor) {
             }
           }
           if ( widgetEditElm === editElm ) {
-            widget.toHTML();
             widgets.splice(i,1);
+            // return widget.toHTML();
+            var ret = widget.toHTML();
+            if ( ret && ret.then ) {
+              widgetToHtmlReturns.push(ret);
+            }
           }
         });
-        // Zap wrappers
-        $('[data-transpozor-container]', editElm).forEach(function (container) {
-          var wrapper = container.parentNode;
-          var parent = wrapper.parentNode;
-          while ( container.firstChild ) {
-            parent.insertBefore(container.firstChild, wrapper);
-          }
-          parent.removeChild(wrapper);
-        });
-        events.end.forEach(function (handler) {
-          handler({
-            editElm: editElm,
-            transposeElms: $(pluginSelectors(), editElm),
-            // transposeSelectors: pluginSelectors(),
+        var zapWrappersAndEmitEnd = function () {
+          // Zap wrappers
+          $('[data-transpozor-container]', editElm).forEach(function (container) {
+            var wrapper = container.parentNode;
+            var parent = wrapper.parentNode;
+            while ( container.firstChild ) {
+              parent.insertBefore(container.firstChild, wrapper);
+            }
+            parent.removeChild(wrapper);
           });
-        });
+          events.end.forEach(function (handler) {
+            handler({
+              editElm: editElm,
+              transposeElms: $(pluginSelectors(), editElm),
+              // transposeSelectors: pluginSelectors(),
+            });
+          });
+          return; // explicitly return undefined.
+        };
+        // Maintain backwards compatibility with Eplica versions (<4.1.4)
+        // by only return a promise if the widgets return promises
+        if ( widgetToHtmlReturns.length ) {
+          return Promise.all( widgetToHtmlReturns )
+              .then( zapWrappersAndEmitEnd );
+        }
+        // FIXME: Always return a promise when all eplica-transpozor using websites
+        // have been updated to a newer (promise-supporting editor) version of Eplica.
+        zapWrappersAndEmitEnd();
       }
     });
 

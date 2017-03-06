@@ -14,7 +14,7 @@ ep.is = ep.matches || ep.msMatchesSelector || ep.webkitMatchesSelector;
 
 
 
-const E = function (tagName, attrs) {
+const E = (tagName, attrs, ...children) => {
   const elm = document.createElement(tagName);
   if (attrs) {
     for (let name in attrs) {
@@ -32,15 +32,12 @@ const E = function (tagName, attrs) {
       }
     }
   }
-  if ( arguments.length > 2 ) {
-    const children = [].slice.call(arguments, 2);
-    children.forEach(child => {
-      if ( typeof child === 'string' ) {
-        child = document.createTextNode( child );
-      }
-      elm.appendChild( child );
-    });
-  }
+  children.forEach((child) => {
+    if ( typeof child === 'string' ) {
+      child = document.createTextNode( child );
+    }
+    elm.appendChild( child );
+  });
   return elm;
 };
 

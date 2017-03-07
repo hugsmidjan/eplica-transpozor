@@ -69,7 +69,9 @@ The factory function/contstructor is invoked right *after* the transpozor's `sta
 
 The widget instance that the plugin returns must expose a single method `.toHTML()`.
 
-`.toHTML()` gets called with no parameters, just *before* the transpozor's `end` event. It should immediately destroy the editing interface, and render static HTML into its `rootElm`.
+`.toHTML()` gets called with no parameters, just *before* the transpozor's `end` event. It should destroy the editing interface, and render static HTML into its `rootElm`.
+
+if a `Promise` is returned the transpozor will wait for it to resolve before allowing the Inline Editor to continue saving.  (NOTE: Rejecting the promise will have unpredictable, catastrophic results.)
 
 
 

@@ -57,7 +57,7 @@ var makeWidgetToolbar = function (widget, actions) {
                       'data-transpozor-button': 'remove',
                       onClick: function (/*e*/) {
                         var cancelledByWidget = widget.onRemove && widget.onRemove();
-                        if ( cancelledByWidget != null ? cancelledByWidget : confirm('Remove Widget!?') ) {
+                        if ( cancelledByWidget != null ? cancelledByWidget : confirm('Remove Widget!?') ) {
                           actions.remove();
                           wrapperElm.parentNode.removeChild( wrapperElm );
                           var pos = widgets.indexOf( widget );
@@ -267,7 +267,7 @@ var registerWithEditor = function (editor) {
   if ( !_registered ) {
     _registered = true;
 
-    editor = editor || window.EPLICA.inlineEditor;
+    editor = editor || window.EPLICA.inlineEditor;
 
     // Expose transpozor as part of the Eplica inlineEditor.
     editor.transpozor = transpozor;

@@ -52,7 +52,7 @@ const makeWidgetToolbar = (widget, actions) => {
                       'data-transpozor-button': 'remove',
                       onClick: (/*e*/) => {
                         const cancelledByWidget = widget.onRemove && widget.onRemove();
-                        if ( cancelledByWidget != null ? cancelledByWidget : confirm('Remove Widget!?') ) {
+                        if ( cancelledByWidget != null ? cancelledByWidget : confirm('Remove Widget!?') ) {
                           actions.remove();
                           wrapperElm.parentNode.removeChild( wrapperElm );
                           const pos = widgets.indexOf( widget );
@@ -94,13 +94,13 @@ const makeWidgetToolbar = (widget, actions) => {
     relax = setTimeout(() => {
       wrapperElm.setAttribute('data-transpozor-wrapper-active','');
     }, 100);
-  }
+  };
   const deHighlight = () => {
     clearTimeout(relax);
     relax = setTimeout(() => {
       wrapperElm.removeAttribute('data-transpozor-wrapper-active');
     }, 100);
-  }
+  };
 
   return  E('div', {
               'data-transpozor-toolbar': '',
@@ -262,7 +262,7 @@ const registerWithEditor = (editor) => {
   if ( !_registered ) {
     _registered = true;
 
-    editor = editor || window.EPLICA.inlineEditor;
+    editor = editor || window.EPLICA.inlineEditor;
 
     // Expose transpozor as part of the Eplica inlineEditor.
     editor.transpozor = transpozor;
@@ -311,7 +311,7 @@ const registerWithEditor = (editor) => {
       const editElm = e.target;
       if ( e.targetType === 'html' ) {
         // Signal to all widgets to re-render as static HTML
-        const widgetToHtmlReturns = []
+        const widgetToHtmlReturns = [];
         widgets.slice().forEach((widget, i) => {
         // const widgetToHtmlReturns = widgets.slice().map((widget, i) => {
           let widgetEditElm = widget.editElm;

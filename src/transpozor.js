@@ -219,7 +219,8 @@ const createWidget = (plugin, elm, editElm, isInserting) => {
 // When the user injects one or more new/empty widgets
 // into an editElm, this function gets called to initialize the
 // inserted empty widget-markers.
-const scanForInsertMarkers = () => {
+let debouncedScan;
+const scanForInsertMarkers = (opts) => {
   // HTML-Snippet (Greinaklippur) example:
   //     <img data-transpozor-insert="pluginId" onload="EPLICA.inlineEditor.transpozor.rescan()" src="https://eplica-cdn.is/f/e2-w.png" />
   //
@@ -229,30 +230,35 @@ const scanForInsertMarkers = () => {
   //     editElm.appendChild( widgetMarker );
   //     transpozor.rescan();
   //
-  $('[data-transpozor-insert]').forEach((placeholderElm) => {
-    const type = placeholderElm.getAttribute('data-transpozor-insert');
-    const plugin = pluginsById[type];
-    if ( plugin ) {
-      let editElm = placeholderElm.parentNode;
-      let nonEditElmParent;
-      while (editElm && !editElm.is('.EPLICA_editzone')) {
-        nonEditElmParent = editElm;
-        editElm = editElm.parentNode;
-      }
-      if ( editElm ) {
-        const insert = plugin.validateInsertion && plugin.validateInsertion( placeholderElm, editElm );
-        if ( insert === false ) {
-          placeholderElm.parentNode.removeChild( placeholderElm );
+  opts = opts || {};
+  const delay = 'delay' in opts ? opts.delay : 10;
+  clearTimeout( debouncedScan );
+  debouncedScan = setTimeout(() => {
+    $('[data-transpozor-insert]').forEach((placeholderElm) => {
+      const type = placeholderElm.getAttribute('data-transpozor-insert');
+      const plugin = pluginsById[type];
+      if ( plugin ) {
+        let editElm = placeholderElm.parentNode;
+        let nonEditElmParent;
+        while (editElm && !editElm.is('.EPLICA_editzone')) {
+          nonEditElmParent = editElm;
+          editElm = editElm.parentNode;
         }
-        else {
-          if ( !plugin.validateInsertion && nonEditElmParent ) {
-            editElm.insertBefore( placeholderElm, nonEditElmParent.nextSibling );
+        if ( editElm ) {
+          const insert = plugin.validateInsertion && plugin.validateInsertion( placeholderElm, editElm );
+          if ( insert === false ) {
+            placeholderElm.parentNode.removeChild( placeholderElm );
           }
-          createWidget(plugin, placeholderElm, editElm, true);
+          else {
+            if ( !plugin.validateInsertion && nonEditElmParent ) {
+              editElm.insertBefore( placeholderElm, nonEditElmParent.nextSibling );
+            }
+            createWidget(plugin, placeholderElm, editElm, true);
+          }
         }
       }
-    }
-  });
+    });
+  }, delay);
 };
 
 

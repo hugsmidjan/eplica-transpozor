@@ -222,7 +222,8 @@ var createWidget = function (plugin, elm, editElm, isInserting) {
 // When the user injects one or more new/empty widgets
 // into an editElm, this function gets called to initialize the
 // inserted empty widget-markers.
-var scanForInsertMarkers = function () {
+var debouncedScan;
+var scanForInsertMarkers = function (opts) {
   // HTML-Snippet (Greinaklippur) example:
   //     <img data-transpozor-insert="pluginId" onload="EPLICA.inlineEditor.transpozor.rescan()" src="https://eplica-cdn.is/f/e2-w.png" />
   //
@@ -232,30 +233,38 @@ var scanForInsertMarkers = function () {
   //     editElm.appendChild( widgetMarker );
   //     transpozor.rescan();
   //
-  $('[data-transpozor-insert]').forEach(function (placeholderElm) {
-    var type = placeholderElm.getAttribute('data-transpozor-insert');
-    var plugin = pluginsById[type];
-    if ( plugin ) {
-      var editElm = placeholderElm.parentNode;
-      var nonEditElmParent;
-      while (editElm && !editElm.is('.EPLICA_editzone')) {
-        nonEditElmParent = editElm;
-        editElm = editElm.parentNode;
-      }
-      if ( editElm ) {
-        var insert = plugin.validateInsertion && plugin.validateInsertion( placeholderElm, editElm );
-        if ( insert === false ) {
-          placeholderElm.parentNode.removeChild( placeholderElm );
-        }
-        else {
-          if ( !plugin.validateInsertion && nonEditElmParent ) {
-            editElm.insertBefore( placeholderElm, nonEditElmParent.nextSibling );
+  opts = opts || {};
+  var delay = 'delay' in opts ? opts.delay : 10;
+  clearTimeout( debouncedScan );
+  debouncedScan = setTimeout(function () {
+    $('[data-transpozor-insert]').forEach(function (placeholderElm) {
+      var type = placeholderElm.getAttribute('data-transpozor-insert');
+      var plugin = pluginsById[type];
+      if ( plugin ) {
+        var editElm = placeholderElm.parentNode;
+        var nonEditElmParent;
+        while (editElm && !editElm.is('.EPLICA_editzone')) {
+          // Ignore empty, auto-inserted <div/> containers
+          if ( editElm.nodeName !== 'DIV' || editElm.className ) {
+            nonEditElmParent = editElm;
           }
-          createWidget(plugin, placeholderElm, editElm, true);
+          editElm = editElm.parentNode;
+        }
+        if ( editElm ) {
+          var insert = plugin.validateInsertion && plugin.validateInsertion( placeholderElm, editElm );
+          if ( insert === false ) {
+            placeholderElm.parentNode.removeChild( placeholderElm );
+          }
+          else {
+            if ( nonEditElmParent && !plugin.validateInsertion ) {
+              nonEditElmParent.parentNode.insertBefore( placeholderElm, nonEditElmParent.nextSibling );
+            }
+            createWidget(plugin, placeholderElm, editElm, true);
+          }
         }
       }
-    }
-  });
+    });
+  }, delay);
 };
 
 

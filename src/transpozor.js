@@ -241,7 +241,10 @@ const scanForInsertMarkers = (opts) => {
         let editElm = placeholderElm.parentNode;
         let nonEditElmParent;
         while (editElm && !editElm.is('.EPLICA_editzone')) {
-          nonEditElmParent = editElm;
+          // Ignore empty, auto-inserted <div/> containers
+          if ( editElm.nodeName !== 'DIV' || editElm.className ) {
+            nonEditElmParent = editElm;
+          }
           editElm = editElm.parentNode;
         }
         if ( editElm ) {
@@ -250,8 +253,8 @@ const scanForInsertMarkers = (opts) => {
             placeholderElm.parentNode.removeChild( placeholderElm );
           }
           else {
-            if ( !plugin.validateInsertion && nonEditElmParent ) {
-              editElm.insertBefore( placeholderElm, nonEditElmParent.nextSibling );
+            if ( nonEditElmParent && !plugin.validateInsertion ) {
+              nonEditElmParent.parentNode.insertBefore( placeholderElm, nonEditElmParent.nextSibling );
             }
             createWidget(plugin, placeholderElm, editElm, true);
           }

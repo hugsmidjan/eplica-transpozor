@@ -61,6 +61,13 @@ const makeWidgetToolbar = (widget, actions) => {
                       },
                       title: 'Remove',
                     }, 'X');
+  const addSpace = E('button', {
+                      'data-transpozor-button': 'addspace',
+                      onClick: (/*e*/) => {
+                        wrapperElm.insertAdjacentText('afterend', 'a');
+                      },
+                      title: 'Add text after',
+                    }, '⎀');
   const moveupBtn = E('button', {
                       'data-transpozor-button': 'moveup',
                       onClick: (/*e*/) => {
@@ -112,6 +119,7 @@ const makeWidgetToolbar = (widget, actions) => {
             },
             moveupBtn,
             movedownBtn,
+            addSpace,
             removeBtn
           );
 };

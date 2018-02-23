@@ -223,6 +223,8 @@ var createWidget = function (plugin, elm, editElm, isInserting) {
   wrapperElm.appendChild( toolbar );
 
   widgets.push( newWidget );
+
+  return newWidget;
 };
 
 
@@ -278,11 +280,13 @@ var scanForInsertMarkers = function (opts) {
 
 
 var _registered;
+var eplicaWidgets = window.EPLICA.externalWidgetPairs || [];
 var registerWithEditor = function (editor) {
   if ( !_registered ) {
     _registered = true;
 
     editor = editor || window.EPLICA.inlineEditor;
+
 
     // Expose transpozor as part of the Eplica inlineEditor.
     editor.transpozor = transpozor;
@@ -314,7 +318,8 @@ var registerWithEditor = function (editor) {
             });
             plugins.forEach(function (plugin) {
               $(plugin.selector, editElm).forEach(function (elm) {
-                createWidget(plugin, elm, editElm);
+                var widget = createWidget(plugin, elm, editElm);
+                eplicaWidgets.push([elm,widget]);
               });
             });
           }

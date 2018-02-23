@@ -220,6 +220,8 @@ const createWidget = (plugin, elm, editElm, isInserting) => {
   wrapperElm.appendChild( toolbar );
 
   widgets.push( newWidget );
+
+  return newWidget;
 };
 
 
@@ -275,11 +277,13 @@ const scanForInsertMarkers = (opts) => {
 
 
 let _registered;
+let eplicaWidgets = window.EPLICA.externalWidgetPairs || [];
 const registerWithEditor = (editor) => {
   if ( !_registered ) {
     _registered = true;
 
     editor = editor || window.EPLICA.inlineEditor;
+
 
     // Expose transpozor as part of the Eplica inlineEditor.
     editor.transpozor = transpozor;
@@ -311,7 +315,8 @@ const registerWithEditor = (editor) => {
             });
             plugins.forEach((plugin) => {
               $(plugin.selector, editElm).forEach((elm) => {
-                createWidget(plugin, elm, editElm);
+                const widget = createWidget(plugin, elm, editElm);
+                eplicaWidgets.push([elm,widget]);
               });
             });
           }

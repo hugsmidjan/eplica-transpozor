@@ -221,7 +221,7 @@ const createWidget = (plugin, elm, editElm, isInserting) => {
 
   widgets.push( newWidget );
 
-  return newWidget;
+  return wrapperElm;
 };
 
 
@@ -277,7 +277,6 @@ const scanForInsertMarkers = (opts) => {
 
 
 let _registered;
-let eplicaWidgets = window.EPLICA.externalWidgetPairs || [];
 const registerWithEditor = (editor) => {
   if ( !_registered ) {
     _registered = true;
@@ -315,8 +314,8 @@ const registerWithEditor = (editor) => {
             });
             plugins.forEach((plugin) => {
               $(plugin.selector, editElm).forEach((elm) => {
-                const widget = createWidget(plugin, elm, editElm);
-                eplicaWidgets.push([elm,widget]);
+                const widgetElm = createWidget(plugin, elm, editElm);
+                editor.sourceChanged && editor.sourceChanged({ removed: elm, inserted: [widgetElm] });
               });
             });
           }
